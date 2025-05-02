@@ -233,6 +233,19 @@
    - Maintain a clean commit history with meaningful commit messages
    - Use conventional git operations for all changes
 
+## External Documentation
+
+1. **py-gitea Documentation**
+   - GitHub Repository: [https://github.com/Langenfeld/py-gitea/](https://github.com/Langenfeld/py-gitea/)
+   - Test Examples: [https://github.com/Langenfeld/py-gitea/blob/master/tests/test_api.py](https://github.com/Langenfeld/py-gitea/blob/master/tests/test_api.py)
+   - These resources provide examples of py-gitea usage and API patterns
+
+2. **Hugging Face Hub Documentation**
+   - Main Documentation: [https://huggingface.co/docs/huggingface_hub/index](https://huggingface.co/docs/huggingface_hub/index)
+   - API Reference: [https://huggingface.co/docs/huggingface_hub/package_reference/index](https://huggingface.co/docs/huggingface_hub/package_reference/index)
+   - LLM-friendly Documentation: [https://huggingface-projects-docs-llms-txt.hf.space/hub/llms.txt](https://huggingface-projects-docs-llms-txt.hf.space/hub/llms.txt)
+   - These resources provide information about the original API we're adapting
+
 ## Development Progress and Future Feature Implementation
 
 ### Completed Features
