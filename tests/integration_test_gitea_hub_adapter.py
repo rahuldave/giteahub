@@ -1,8 +1,13 @@
 """
 Test the Gitea Hub adapter implementation that leverages py-gitea.
+
+These are integration tests that connect to a real Gitea server.
 """
 
 import pytest
+
+# Mark all tests in this file as integration tests
+pytestmark = pytest.mark.integration
 import os
 import shutil
 from pathlib import Path

@@ -53,9 +53,9 @@ class TestGiteaHubClient:
     
     def test_initialization(self, mock_gitea):
         """Test initialization of the client."""
-        # Test with token
+        # Test with token - token should be a positional argument, not keyword
         client = GiteaHubClient("https://gitea.example.com", token="test_token")
-        mock_gitea['gitea_cls'].assert_called_with("https://gitea.example.com", token="test_token")
+        mock_gitea['gitea_cls'].assert_called_with("https://gitea.example.com", "test_token")
         
         # Test with username/password
         client = GiteaHubClient("https://gitea.example.com", username="user", password="pass")
@@ -90,14 +90,21 @@ class TestGiteaHubClient:
         # Mock user and repo
         mock_user = mock_gitea['user']
         mock_user.username = "testuser"
-        mock_repo = MagicMock()
+        
+        # Create initial repo object returned by create_repo
+        initial_repo = MagicMock()
+        initial_repo.full_name = "testuser/test-repo"
+        
+        # Create repo object returned by Repository.request
+        mock_repo = mock_gitea['repo']
         mock_repo.full_name = "testuser/test-repo"
         
-        # Set up create_repo to return our mock repo
-        mock_user.create_repo.return_value = mock_repo
+        # Set up create_repo to return our initial repo
+        mock_user.create_repo.return_value = initial_repo
         
-        # Force the organization lookup to fail
-        mock_gitea['gitea'].get_organization.side_effect = Exception("Not an organization")
+        # Set up Repository.request to return our mock_repo
+        # This is the pattern used in the implementation - get a fresh repo object after creation
+        mock_gitea['repo_cls'].request.return_value = mock_repo
         
         # Pre-set the current user (this matches what get_current_user would return)
         client._current_user = mock_user
@@ -105,12 +112,12 @@ class TestGiteaHubClient:
         # Call the method
         result = client.create_repo("testuser/test-repo", repo_type=REPO_TYPE_MODEL)
         
-        # Verify repo was created with correct parameters
+        # Verify repo was created with correct parameters - using camelCase as per py-gitea API
         mock_user.create_repo.assert_called_with(
-            "test-repo", 
+            repoName="test-repo", 
             description=f"A {REPO_TYPE_MODEL} repository",
             private=False,
-            auto_init=True
+            autoInit=True
         )
         
         # Verify topics were added
@@ -123,27 +130,36 @@ class TestGiteaHubClient:
         # Mock org and repo
         mock_org = MagicMock()
         mock_org.username = "testorg"
-        mock_repo = MagicMock()
+        
+        # Create initial repo object returned by create_repo
+        initial_repo = MagicMock()
+        initial_repo.full_name = "testorg/test-repo"
+        
+        # Create repo object returned by Repository.request
+        mock_repo = mock_gitea['repo']
         mock_repo.full_name = "testorg/test-repo"
         
-        # Set up create_repo to return our mock repo
-        mock_org.create_repo.return_value = mock_repo
+        # Set up create_repo to return our initial repo
+        mock_org.create_repo.return_value = initial_repo
         
-        # Mock get_organization to return our mock org
-        mock_gitea['gitea'].get_organization.return_value = mock_org
+        # Set up Repository.request to return our mock_repo for adding topics
+        mock_gitea['repo_cls'].request.return_value = mock_repo
+        
+        # Mock Organization.request to return our mock org
+        mock_gitea['org_cls'].request.return_value = mock_org
         
         # Call the method
         result = client.create_repo("testorg/test-repo", repo_type=REPO_TYPE_DATASET)
         
-        # Verify org was retrieved
-        mock_gitea['gitea'].get_organization.assert_called_with("testorg")
+        # Verify org was retrieved using Organization.request
+        mock_gitea['org_cls'].request.assert_called_with(mock_gitea['gitea'], "testorg")
         
-        # Verify repo was created with correct parameters
+        # Verify repo was created with correct parameters - using camelCase as per py-gitea API
         mock_org.create_repo.assert_called_with(
-            "test-repo", 
+            repoName="test-repo", 
             description=f"A {REPO_TYPE_DATASET} repository",
             private=False,
-            auto_init=True
+            autoInit=True
         )
         
         # Verify topics were added
@@ -286,15 +302,14 @@ class TestGiteaHubClient:
             "test-repo"
         )
         
-        # Verify get_git_content was called
-        mock_repo.get_git_content.assert_called_with("main", "")
+        # Verify get_git_content was called with no parameters
+        mock_repo.get_git_content.assert_called_with()
         
         # Verify create_file was called with base64 encoded content
+        # First arg is path, second arg is content (using keyword)
         mock_repo.create_file.assert_called_with(
-            path="test.txt",
-            content=encoded_content,
-            message="Upload test file",
-            branch="main"
+            "test.txt",
+            content=encoded_content
         )
         
         # Verify result has expected structure
@@ -342,16 +357,15 @@ class TestGiteaHubClient:
             "test-repo"
         )
         
-        # Verify get_git_content was called
-        mock_repo.get_git_content.assert_called_with("main", "")
+        # Verify get_git_content was called with no parameters
+        mock_repo.get_git_content.assert_called_with()
         
         # Verify change_file was called with base64 encoded content
+        # First arg is path, second arg is SHA, third is content (using keyword)
         mock_repo.change_file.assert_called_with(
-            path="test.txt",
-            content=encoded_content,
-            message="Update test file",
-            branch="main",
-            sha="file-sha"
+            "test.txt",
+            "file-sha",
+            content=encoded_content
         )
         
         # Verify result has expected structure
@@ -396,15 +410,14 @@ class TestGiteaHubClient:
             "test-repo"
         )
         
-        # Verify get_git_content was called
-        mock_repo.get_git_content.assert_called_with("main", "nested/path")
+        # Verify get_git_content was called with no parameters
+        mock_repo.get_git_content.assert_called_with()
         
         # Verify create_file was called with base64 encoded content
+        # First arg is path, second arg is content (using keyword)
         mock_repo.create_file.assert_called_with(
-            path="nested/path/test.txt",
-            content=encoded_content,
-            message="Upload test file",
-            branch="main"
+            "nested/path/test.txt",
+            content=encoded_content
         )
         
         # Verify result has expected structure

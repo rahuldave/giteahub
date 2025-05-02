@@ -10,3 +10,10 @@ dependencies = [
     "py-gitea>=0.2.9",
     "pytest>=8.3.5",
 ]
+
+[tool.pytest.ini_options]
+markers = [
+    "integration: marks tests as integration tests that require a running Gitea server",
+]
+testpaths = ["tests"]
+python_files = ["test_*.py", "integration_test_*.py"]

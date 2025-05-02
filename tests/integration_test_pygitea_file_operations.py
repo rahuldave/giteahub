@@ -1,5 +1,7 @@
 """
 Test file operations with py-gitea.
+
+Integration tests that require a running Gitea server.
 """
 
 import pytest
@@ -7,6 +9,9 @@ import os
 import sys
 import base64
 from pathlib import Path
+
+# Mark all tests in this file as integration tests
+pytestmark = pytest.mark.integration
 
 # Add the parent directory to sys.path to make the tests module importable
 sys.path.insert(0, os.path.abspath(os.path.dirname(os.path.dirname(__file__))))
